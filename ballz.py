@@ -1,9 +1,10 @@
-global root, tiles
+global root, tiles, gamedata
 import tkinter as tk
 import random
 
 root = tk.Tk()
 root.title('Ballz')
+root.config(bg='black')
 
 class tile:
     def __init__(self, canvas, num, x, y):
@@ -21,6 +22,8 @@ class tile:
     width = height
 
 def new_row():
+    global gamedata
+    gamedata.stage += 1
     for row in tiles:
         for t in row:
             t.y += 37
@@ -28,7 +31,14 @@ def new_row():
     tiles.insert(0, [])
     for i in range(5, 299, 37):
         if not random.randint(1, 9) in [1, 2]:
-            tiles[0].append(tile(canvas, 100, i, 5))
+            if random.randint(1, 10) == 1:
+                inc = 1
+            else:
+                inc = 0
+            tiles[0].append(tile(canvas, gamedata.stage + inc, i, 5))
+
+class gamedata:
+    stage = 0
 
 canvas = tk.Canvas(root, height=500, width=299, bg='black')
 
