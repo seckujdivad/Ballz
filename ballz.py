@@ -41,7 +41,7 @@ def new_row():
             t.y += 37
             t.refresh()
     tiles.insert(0, [])
-    for i in range(5, 299, 37):
+    for i in range(5, gamedata.width, 37):
         if not random.randint(1, 9) in [1, 2]:
             if random.randint(1, 10) == 1:
                 inc = 1
@@ -55,9 +55,24 @@ def ball_move(canvas, balls):
         for b in balls:
             b.x += b.dx
             b.y += b.dy
-            b.refresh()
             clipx = b.x + b.radius > gamedata.width or b.x - b.radius < 0
             clipy = b.y + b.radius > gamedata.height or b.y - b.radius < 0
+            for row in tiles:
+                for t in row:
+                    cx = (b.x - b.radius < t.x + t.width and b.x + b.radius > t.x)
+                    cy = (b.y - b.radius < t.y + t.height and b.y + b.radius > t.y)
+                    if cx and cy:
+                        centrex = t.x + (t.width / 2)
+                        centrey = t.y + (t.height / 2)
+                        dx = abs(b.x - centrex)
+                        dy = abs(b.y - centrey)
+                        if dx > dy:
+                            clipx = True
+                        elif dx < dy:
+                            clipy = True
+                        else:
+                            clipx = True
+                            clipy = True
             if clipx or clipy:
                 b.x -= b.dx
                 b.y -= b.dy
@@ -65,7 +80,8 @@ def ball_move(canvas, balls):
                 b.dx = 0 - b.dx
             if clipy:
                 b.dy = 0 - b.dy
-        time.sleep(0.01)
+            b.refresh()
+        time.sleep(0.015)
 
 class gamedata:
     stage = 0
@@ -82,9 +98,9 @@ for i in range(4):
 
 balls = []
 for i in range(1):
-    balls.append(ball(canvas, 100, 100, -2, -2))
+    balls.append(ball(canvas, 100, 300, -2, -4))
 
-threading.Thread(target=ball_move, args=(canvas, balls), name='Ball movement').start()
+threading.Thread(target=ball_move, args=[canvas, balls], name='Ball movement').start()
 
 #####
 
