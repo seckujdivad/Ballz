@@ -1,4 +1,4 @@
-global root, tiles, gamedata
+global root, tiles, gamedata, new_row
 import tkinter as tk
 import random, threading
 
@@ -13,23 +13,28 @@ class tile:
         self.colour = 'green'
         self.x = x
         self.y = y
+        if self.num == 'BALL':
+            tsize = 8
+        else:
+            tsize = 12
         self.obj = self.canvas.create_rectangle(x, y, x + self.width, y + self.height, fill=self.colour, outline=self.colour)
-        self.text = self.canvas.create_text(x + (self.width / 2), y + (self.height / 2), text=str(self.num), fill='white', font=('', 12))
+        self.text = self.canvas.create_text(x + (self.width / 2), y + (self.height / 2), text=str(self.num), fill='white', font=('', tsize))
         self.refresh()
     def refresh(self):
-        if self.num < 5:
-            self.colour = '#c6a500' #yellow
-        elif 5 <= self.num < 10:
-            self.colour = 'green'
-        elif 10 <= self.num < 20:
-            self.colour = 'blue'
-        elif 20 <= self.num < 30:
-            self.colour = 'purple'
-        else:
-            self.colour = 'pink'
-        self.canvas.itemconfig(self.obj, fill=self.colour, outline=self.colour)
-        self.canvas.itemconfig(self.text, text=str(self.num))
-        if self.num < 1:
+        if not self.num == 'BALL':
+            if self.num < 5:
+                self.colour = '#c6a500' #yellow
+            elif 5 <= self.num < 10:
+                self.colour = 'green'
+            elif 10 <= self.num < 20:
+                self.colour = 'blue'
+            elif 20 <= self.num < 30:
+                self.colour = 'purple'
+            else:
+                self.colour = 'pink'
+            self.canvas.itemconfig(self.obj, fill=self.colour, outline=self.colour)
+            self.canvas.itemconfig(self.text, text=str(self.num))
+        if self.num != 'BALL' and self.num < 1:
             self.canvas.delete(self.obj)
             self.canvas.delete(self.text)
         else:
@@ -65,7 +70,11 @@ def new_row():
                 inc = 1
             else:
                 inc = 0
-            tiles[0].append(tile(canvas, gamedata.stage + inc, i, 5))
+            if random.randint(1, 7) == 1:
+                string = 'BALL'
+            else:
+                string = gamedata.stage + inc
+            tiles[0].append(tile(canvas, string, i, 5))
 
 class onclick:
     def __init__(self, balls, canvas, tiles):
@@ -119,7 +128,10 @@ class onclick:
                             cx = (b.x - b.radius < t.x + t.width and b.x + b.radius > t.x)
                             cy = (b.y - b.radius < t.y + t.height and b.y + b.radius > t.y)
                             if cx and cy:
-                                t.num -= 1
+                                if t.num == 'BALL':
+                                    pass
+                                else:
+                                    t.num -= 1
                                 t.refresh()
                                 centrex = t.x + (t.width / 2)
                                 centrey = t.y + (t.height / 2)
@@ -132,7 +144,7 @@ class onclick:
                                 else:
                                     clipx = True
                                     clipy = True
-                                if t.num < 1:
+                                if t.num != 'BALL' and t.num < 1:
                                     row.remove(t)
                     if clipx or clipy:
                         b.x -= b.dx
@@ -151,6 +163,7 @@ class onclick:
             b.x = gamedata.width / 2
             b.y = gamedata.height - 50
             b.refresh()
+        new_row()
         self.running = False
         print('end')
     maxmove = 4
@@ -166,8 +179,7 @@ canvas = tk.Canvas(root, height=gamedata.height, width=gamedata.width, bg='black
 #####
 
 tiles = []
-for i in range(4):
-    new_row()
+new_row()
 
 balls = []
 
