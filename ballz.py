@@ -107,6 +107,9 @@ class onclick:
         else:
             for i in range(self.ballsnextround):
                 balls.append(ball(canvas, gamedata.width / 2, gamedata.height - 50, ndx, ndy))
+        for b in balls:
+            b.dx = ndx
+            b.dy = ndy
         running = True
         lsince = 0
         while running:
@@ -171,6 +174,7 @@ class onclick:
         for b in balls:
             b.x = gamedata.width / 2
             b.y = gamedata.height - 50
+            b.enabled = True
             b.refresh()
         new_row()
         self.score += 1
