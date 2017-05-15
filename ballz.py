@@ -102,17 +102,15 @@ class onclick:
         if dx > 0:
             ndx = 0 - ndx
         ndy = 0 - abs(ndy)
-        balls.append(ball(canvas, gamedata.width / 2, gamedata.height - 50, ndx, ndy))
-        gap = 0
-        for b in balls:
-            gap += 5
-            b.x = gamedata.width / 2 + (ndx * gap)
-            b.y = gamedata.height - 50 + (ndy * gap)
-            b.dx = ndx
-            b.dy = ndy
-            b.enabled = True
+        if self.score == 0:
+            balls.append(ball(canvas, gamedata.width / 2, gamedata.height - 50, ndx, ndy))
+        else:
+            for i in range(self.ballsnextround):
+                balls.append(ball(canvas, gamedata.width / 2, gamedata.height - 50, ndx, ndy))
         running = True
+        lsince = 0
         while running:
+            lsince += 1
             still = False
             for b in balls:
                 if b.enabled:
@@ -129,7 +127,7 @@ class onclick:
                             cy = (b.y - b.radius < t.y + t.height and b.y + b.radius > t.y)
                             if cx and cy:
                                 if t.num == 'BALL':
-                                    pass
+                                    t.num = -1234
                                 else:
                                     t.num -= 1
                                 t.refresh()
@@ -137,15 +135,18 @@ class onclick:
                                 centrey = t.y + (t.height / 2)
                                 dx = abs(b.x - centrex)
                                 dy = abs(b.y - centrey)
-                                if dx > dy:
-                                    clipx = True
-                                elif dx < dy:
-                                    clipy = True
+                                if t.num == -1234:
+                                    self.ballsnextround += 1
                                 else:
-                                    clipx = True
-                                    clipy = True
-                                if t.num != 'BALL' and t.num < 1:
-                                    row.remove(t)
+                                    if dx > dy:
+                                        clipx = True
+                                    elif dx < dy:
+                                        clipy = True
+                                    else:
+                                        clipx = True
+                                        clipy = True
+                                    if t.num < 1:
+                                        row.remove(t)
                     if clipx or clipy:
                         b.x -= b.dx
                         b.y -= b.dy
@@ -154,6 +155,14 @@ class onclick:
                     if clipy:
                         b.dy = 0 - b.dy
                     b.refresh()
+                else:
+                    if lsince == 5:
+                        lsince = 0
+                        b.x = gamedata.width / 2 + (ndx)
+                        b.y = gamedata.height - 50 + (ndy)
+                        b.dx = ndx
+                        b.dy = ndy
+                        b.enabled = True
             if still:
                 running = True
             else:
@@ -164,10 +173,13 @@ class onclick:
             b.y = gamedata.height - 50
             b.refresh()
         new_row()
+        self.score += 1
         self.running = False
         print('end')
     maxmove = 4
     running = False
+    ballsnextround = 0
+    score = 0
 
 class gamedata:
     stage = 0
