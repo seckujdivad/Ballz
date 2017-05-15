@@ -110,12 +110,19 @@ class onclick:
         for b in balls:
             b.dx = ndx
             b.dy = ndy
+            b.x = gamedata.width / 2
+            b.y = gamedata.height - 50
+            b.enabled = False
         running = True
-        lsince = 0
+        lsince = 9
         while running:
             lsince += 1
             still = False
             for b in balls:
+                if lsince == 10 and not b.enabled:
+                        lsince = 0
+                        b.enabled = True
+                        print('enable')
                 if b.enabled:
                     still = True
                     b.x += b.dx
@@ -158,14 +165,6 @@ class onclick:
                     if clipy:
                         b.dy = 0 - b.dy
                     b.refresh()
-                else:
-                    if lsince == 5:
-                        lsince = 0
-                        b.x = gamedata.width / 2 + (ndx)
-                        b.y = gamedata.height - 50 + (ndy)
-                        b.dx = ndx
-                        b.dy = ndy
-                        b.enabled = True
             if still:
                 running = True
             else:
@@ -174,7 +173,7 @@ class onclick:
         for b in balls:
             b.x = gamedata.width / 2
             b.y = gamedata.height - 50
-            b.enabled = True
+            #b.enabled = True
             b.refresh()
         new_row()
         self.score += 1
