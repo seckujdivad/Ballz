@@ -74,8 +74,6 @@ class tile:
             yaddhalfheight = (((self.y) + (self.height / 2) - (gamedata.height / 2)) * ypop) + gamedata.height / 2
             self.canvas.coords(self.obj, x, y, xaddwidth, yaddheight)
             self.canvas.coords(self.text, xaddhalfwidth, yaddhalfheight)
-            '''self.canvas.coords(self.obj, (self.x), (self.y), (self.x + self.width), (self.y + self.height))
-            self.canvas.coords(self.text, (self.x + (self.width / 2), (self.y + (self.height / 2)))'''
     height = 32
     width = height
     needs_refresh = False
@@ -131,6 +129,8 @@ class onclick:
         balls = self.balls
         canvas = self.canvas
         tiles = self.tiles
+        if not self.ballnum_display == None:
+            canvas.delete(self.ballnum_display)
         dx = self.startx - event.x
         dy = self.starty - event.y
         angle = math.atan(dy / dx)
@@ -222,12 +222,13 @@ class onclick:
         for b in balls:
             b.x = gamedata.width / 2
             b.y = gamedata.height - 50
-            #b.enabled = True
             b.refresh()
+        self.ballnum_display = canvas.create_text(gamedata.width / 2, gamedata.height - 30, text='x' + str(len(balls) + self.ballsnextround), fill='white')
         new_row()
         self.score += 1
         slabel.increment(1)
         self.running = False
+    ballnum_display = None
     maxmove = 4
     running = False
     stop = False
@@ -275,7 +276,6 @@ class settings_class:
     def __init__(self):
         self.open_button = tk.Button(root, text='⚙', font=('', 15), command=self.make, relief=tk.FLAT, bg='black', fg='white', overrelief=tk.RIDGE, activeforeground='white', activebackground='black')
     def make(self):
-        print(root_w.winfo_width(), root_w.winfo_height())
         if self.running:
             self.window.destroy()
             self.running = False
