@@ -2,7 +2,7 @@
 global root, tiles, gamedata, new_row, slabel, settings, canvas
 import tkinter as tk
 from tkinter import messagebox
-import random, threading
+import random, threading, time
 
 root = tk.Tk()
 root.title('Ballz')
@@ -23,6 +23,7 @@ class tile:
         self.text = self.canvas.create_text(x + (self.width / 2), y + (self.height / 2), text=str(self.num), fill='white', font=('', tsize))
         self.refresh()
     def refresh(self):
+        self.needs_refresh = False
         if not self.num == 'BALL':
             if self.num < 5:
                 self.colour = '#c6a500' #yellow
@@ -40,13 +41,28 @@ class tile:
             self.canvas.delete(self.obj)
             self.canvas.delete(self.text)
         else:
-            self.canvas.coords(self.obj, self.x, self.y, self.x + self.width, self.y + self.height)
-            self.canvas.coords(self.text, self.x + (self.width / 2), self.y + (self.height / 2))
+            if settings.popping_value:
+                xpop, ypop = graphics.getpop()
+            else:
+                xpop = 1
+                ypop = 1
+            x = ((self.x - (gamedata.width / 2)) * xpop) + gamedata.width / 2
+            y = ((self.y - (gamedata.height / 2)) * ypop) + gamedata.height / 2
+            xaddwidth = (((self.x) + self.width - (gamedata.width / 2)) * xpop) + gamedata.width / 2
+            yaddheight = (((self.y) + self.height - (gamedata.height / 2)) * ypop) + gamedata.height / 2
+            xaddhalfwidth = (((self.x) + (self.width / 2) - (gamedata.width / 2)) * xpop) + gamedata.width / 2
+            yaddhalfheight = (((self.y) + (self.height / 2) - (gamedata.height / 2)) * ypop) + gamedata.height / 2
+            self.canvas.coords(self.obj, x, y, xaddwidth, yaddheight)
+            self.canvas.coords(self.text, xaddhalfwidth, yaddhalfheight)
+            '''self.canvas.coords(self.obj, (self.x), (self.y), (self.x + self.width), (self.y + self.height))
+            self.canvas.coords(self.text, (self.x + (self.width / 2), (self.y + (self.height / 2)))'''
     height = 32
     width = height
+    needs_refresh = False
 
 class ball:
     def __init__(self, canvas, x, y, dx, dy):
+        self.last_pop = time.time()
         self.canvas = canvas
         self.x = x
         self.y = y
@@ -54,7 +70,7 @@ class ball:
         self.dy = dy
         self.obj = self.canvas.create_oval(self.x - self.radius, self.y - self.radius, self.x + self.radius, self.y + self.radius, outline='white', fill='white')
     def refresh(self):
-        self.canvas.coords(self.obj, self.x - self.radius, self.y - self.radius, self.x + self.radius, self.y + self.radius)
+        self.canvas.coords(self.obj, (self.x - self.radius), (self.y - self.radius), (self.x + self.radius), (self.y + self.radius))
     radius = 8
     enabled = True
 
@@ -122,8 +138,9 @@ class onclick:
             still = False
             for b in balls:
                 if lsince == 10 and not b.enabled:
-                        lsince = 0
-                        b.enabled = True
+                    lsince = 0
+                    b.enabled = True
+                    graphics.last_pop = time.time()
                 if b.enabled:
                     still = True
                     b.x += b.dx
@@ -199,10 +216,20 @@ class onclick:
 def refreshloop():
     import time
     obj = ''
+    last = False
     while True:
         start = time.time()
         for b in balls:
-            b.refresh()
+            if b.enabled:
+                b.refresh()
+        if settings.popping_value:
+            xpop, ypop = graphics.getpop()
+            logic = (not xpop == 1) or (not ypop == 1)
+            if (logic or last):
+                for row in tiles:
+                    for t in row:
+                        t.refresh()
+            last = logic
         delay = (1 / int(settings.frame_cap_value)) - (time.time() - start)
         if delay > 0:
             time.sleep(delay)
@@ -235,16 +262,20 @@ class settings_class:
             self.window = tk.Frame(root)
             self.labels = tk.Frame(self.window)
             self.inputs = tk.Frame(self.window)
-            self.frame_cap_label = tk.Label(self.labels, text='FPS Cap')
+            self.frame_cap_label = tk.Label(self.labels, text='FPS Cap', justify=tk.LEFT)
             self.frame_cap = tk.Spinbox(self.inputs, increment=2, from_=1, to=60, command=self.update_frame_cap, highlightthickness=0)
-            self.physics_delay_label = tk.Label(self.labels, text='Physics Tick Delay (ms)')
+            self.physics_delay_label = tk.Label(self.labels, text='Physics Tick Delay (ms)', justify=tk.LEFT)
             self.physics_delay = tk.Spinbox(self.inputs, increment=0.5, from_=0, to=10, command=self.update_physics_delay)
+            self.popping_label = tk.Label(self.labels, text='Tile Popping', justify=tk.LEFT)
+            self.popping = tk.Spinbox(self.inputs, values=('No', 'Yes'), command=self.update_popping)
             ####
             self.frame_cap_label.pack(fill=tk.X, anchor='nw')
             self.physics_delay_label.pack(fill=tk.X, anchor='nw')
+            self.popping_label.pack(fill=tk.X, anchor='nw')
             ####
             self.frame_cap.pack(fill=tk.X, anchor='nw', expand=True)
             self.physics_delay.pack(fill=tk.X, anchor='nw', expand=True)
+            self.popping.pack(fill=tk.X, anchor='nw', expand=True)
             ####
             self.frame_cap.delete(0, tk.END)
             self.physics_delay.delete(0, tk.END)
@@ -264,10 +295,31 @@ class settings_class:
             self.physics_delay_value = float(self.physics_delay.get()) / 1000
         except:
             pass
+    def update_popping(self):
+        try:
+            self.popping_value = self.popping.get() == 'Yes'
+        except:
+            pass
     threadhash = 0
     frame_cap_value = 50
     physics_delay_value = 0.004
+    popping_value = False
     running = False
+
+class graphics_class:
+    def __init__(self):
+        self.last_pop = 0
+    def getpop(self):
+        tsince = time.time() - self.last_pop
+        if tsince < 0.1:
+            x = tsince * 5
+            npop = 1 + (-1.1 * pow(tsince, 2) + 5 * tsince) / 10
+            return self.xpop * npop, self.ypop * npop
+        return 1, 1
+    xpop = 1.01
+    ypop = 1.01
+
+graphics = graphics_class()
 settings = settings_class()
 
 
