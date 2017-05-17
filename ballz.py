@@ -176,7 +176,11 @@ class onclick:
             for t in row:
                 if t.y > 340:
                     self.stop = True
-                    canvas.create_text(gamedata.width / 2, gamedata.height / 2, text='GAME OVER', font=('', 20), fill='white')
+                    text = canvas.create_text(gamedata.width / 2, gamedata.height / 2, text='GAME OVER', font=('', 5), fill='white')
+                    for x in range(15):
+                        num = int((1.5 * pow(x, 2) + -5 * x + 60) / 10)
+                        canvas.itemconfig(text, font=('', num))
+                        time.sleep(0.01)
         for b in balls:
             b.x = gamedata.width / 2
             b.y = gamedata.height - 50
