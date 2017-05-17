@@ -1,4 +1,5 @@
-global root, tiles, gamedata, new_row
+#no. 9 large
+global root, tiles, gamedata, new_row, slabel, ftick, canvas
 import tkinter as tk
 import random, threading
 
@@ -74,20 +75,19 @@ def new_row():
                 string = 'BALL'
             else:
                 string = gamedata.stage + inc
-            tiles[0].append(tile(canvas, string, i, 5))
+            tiles[0].append(tile(canvas, string, i, 5 * 2 + 32))
 
 class onclick:
     def __init__(self, balls, canvas, tiles):
         self.startx = gamedata.width / 2
-        self.starty = gamedata.height
+        self.starty = gamedata.height - 50
         self.balls = balls
         self.tiles = tiles
         self.canvas = canvas
     def bind(self, event):
-        if not self.running:
-            print('click')
+        if (not self.running) and (not self.stop):
             self.event = event
-            threading.Thread(target=self.ball_move, args=[event], name='Ball movement').start()
+            threading.Thread(target=self.ball_move, args=[event], name='Ball movement', daemon=True).start()
     def ball_move(self, event):
         self.running = True
         import time, math
@@ -97,8 +97,8 @@ class onclick:
         dx = self.startx - event.x
         dy = self.starty - event.y
         angle = math.atan(dy / dx)
-        ndx = math.cos(angle) * self.maxmove
-        ndy = math.sin(angle) * self.maxmove
+        ndx = float(math.cos(angle) * self.maxmove)
+        ndy = float(math.sin(angle) * self.maxmove)
         if dx > 0:
             ndx = 0 - ndx
         ndy = 0 - abs(ndy)
@@ -122,7 +122,6 @@ class onclick:
                 if lsince == 10 and not b.enabled:
                         lsince = 0
                         b.enabled = True
-                        print('enable')
                 if b.enabled:
                     still = True
                     b.x += b.dx
@@ -132,6 +131,8 @@ class onclick:
                     if b.y + b.radius > gamedata.height:
                         b.enabled = False
                     for row in tiles:
+                        if row == []:
+                            tiles.remove(row)
                         for t in row:
                             cx = (b.x - b.radius < t.x + t.width and b.x + b.radius > t.x)
                             cy = (b.y - b.radius < t.y + t.height and b.y + b.radius > t.y)
@@ -164,12 +165,16 @@ class onclick:
                         b.dx = 0 - b.dx
                     if clipy:
                         b.dy = 0 - b.dy
-                    b.refresh()
             if still:
                 running = True
             else:
                 running = False
-            time.sleep(0.015)
+            time.sleep(0.005)
+        for row in tiles:
+            for t in row:
+                if t.y > 340:
+                    self.stop = True
+                    canvas.create_text(gamedata.width / 2, gamedata.height / 2, text='GAME OVER', font=('', 20), fill='white')
         for b in balls:
             b.x = gamedata.width / 2
             b.y = gamedata.height - 50
@@ -177,11 +182,43 @@ class onclick:
             b.refresh()
         new_row()
         self.score += 1
+        slabel.increment(1)
         self.running = False
-        print('end')
-    maxmove = 4
+    maxmove = 3
     running = False
+    stop = False
     ballsnextround = 0
+    score = 0
+
+def refreshloop():
+    import time
+    obj = ''
+    while True:
+        start = time.time()
+        for b in balls:
+            b.refresh()
+        try:
+            tick = int(ftick.widget.get())
+        except ValueError:
+            tick = 30
+        delay = (1 / tick) - (time.time() - start)
+        if delay > 0:
+            time.sleep(delay)
+            try:
+                canvas.delete(obj)
+                obj = ''
+            except:
+                pass
+        else:
+            if obj == '':
+                obj = canvas.create_text(gamedata.width / 2, gamedata.height - 20, text='CANNOT RENDER FRAME', font=('', 15), fill='red')
+
+class scorelabel:
+    def __init__(self):
+        self.widget = tk.Label(root, text='----', bg='black', fg='snow1', font=('', 20))
+    def increment(self, inc):
+        self.score += inc
+        self.widget.config(text=str(self.score))
     score = 0
 
 class gamedata:
@@ -189,7 +226,18 @@ class gamedata:
     height = 500
     width = 299
 
+slabel = scorelabel()
 canvas = tk.Canvas(root, height=gamedata.height, width=gamedata.width, bg='black')
+
+class frameticker:
+    def __init__(self):
+        self.widget = tk.Spinbox(root, increment=1, command=self.check, text=30, from_=1, to=60)
+    def check(self):
+        num = self.widget.get()
+        try:
+            int(num)
+        except:
+            self.widget.config(text=30)
 
 #####
 
@@ -198,11 +246,15 @@ new_row()
 
 balls = []
 
+ftick = frameticker()
 onclick_b = onclick(balls, canvas, tiles)
 canvas.bind('<Button-1>', onclick_b.bind)
+threading.Thread(target=refreshloop, name='Refresh', daemon=True).start()
 
 #####
 
+slabel.widget.pack()
 canvas.pack()
+ftick.widget.pack(fill=tk.X, expand=True)
 
 root.mainloop()
