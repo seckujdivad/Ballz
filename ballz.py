@@ -1,12 +1,32 @@
 #no. 9 large
-global root, tiles, gamedata, new_row, slabel, settings, canvas
+global root, tiles, gamedata, new_row, slabel, settings, canvas, root_w, root, refreshloop, onclick , onclick_b, balls
 import tkinter as tk
 from tkinter import messagebox
 import random, threading, time
 
-root = tk.Tk()
-root.title('Ballz')
-root.config(bg='black')
+root_w = tk.Tk()
+root_w.title('Ballz')
+root_w.config(bg='black')
+root_w.minsize(width=299, height=578)
+
+class launcher:
+    def __init__(self):
+        self.frame = tk.Frame(root_w, bg='black', width=299, height=578)
+        self.button = tk.Button(self.frame, bg='black', fg='white', relief=tk.FLAT, text='PLAY', command=self.play, overrelief=tk.RIDGE, activeforeground='white', activebackground='black', font=('', 25))
+        ####
+        self.frame.grid_propagate(0)
+        self.button.place(relx=0.5, rely=0.45, anchor=tk.CENTER)
+        self.frame.pack(fill=tk.BOTH, expand=True)
+    def play(self):
+        global balls, canvas, tiles
+        self.frame.destroy()
+        root.pack()
+        threading.Thread(target=refreshloop, name='Refresh', daemon=True).start()
+        new_row()
+        onclick_b = onclick(balls, canvas, tiles)
+        canvas.bind('<Button-1>', onclick_b.bind)
+
+root = tk.Frame(root_w, bg='black')
 
 class tile:
     def __init__(self, canvas, num, x, y):
@@ -130,6 +150,7 @@ class onclick:
             b.x = gamedata.width / 2
             b.y = gamedata.height - 50
             b.enabled = False
+        balls[0].enabled = True
         running = True
         lsince = 9
         self.ballsnextround = 0
@@ -254,6 +275,7 @@ class settings_class:
     def __init__(self):
         self.open_button = tk.Button(root, text='⚙', font=('', 15), command=self.make, relief=tk.FLAT, bg='black', fg='white', overrelief=tk.RIDGE, activeforeground='white', activebackground='black')
     def make(self):
+        print(root_w.winfo_width(), root_w.winfo_height())
         if self.running:
             self.window.destroy()
             self.running = False
@@ -326,13 +348,8 @@ settings = settings_class()
 #####
 
 tiles = []
-new_row()
 
 balls = []
-
-onclick_b = onclick(balls, canvas, tiles)
-canvas.bind('<Button-1>', onclick_b.bind)
-threading.Thread(target=refreshloop, name='Refresh', daemon=True).start()
 
 #####
 
@@ -340,4 +357,5 @@ slabel.widget.pack()
 canvas.pack()
 settings.open_button.pack(fill=tk.BOTH, side=tk.TOP)
 
-root.mainloop()
+launcher()
+root_w.mainloop()
