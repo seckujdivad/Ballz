@@ -1,6 +1,7 @@
 #no. 9 large
-global root, tiles, gamedata, new_row, slabel, ftick, canvas
+global root, tiles, gamedata, new_row, slabel, settings, canvas
 import tkinter as tk
+from tkinter import messagebox
 import random, threading
 
 root = tk.Tk()
@@ -197,11 +198,7 @@ def refreshloop():
         start = time.time()
         for b in balls:
             b.refresh()
-        try:
-            tick = int(ftick.widget.get())
-        except ValueError:
-            tick = 30
-        delay = (1 / tick) - (time.time() - start)
+        delay = (1 / settings.frame_cap) - (time.time() - start)
         if delay > 0:
             time.sleep(delay)
 
@@ -221,15 +218,42 @@ class gamedata:
 slabel = scorelabel()
 canvas = tk.Canvas(root, height=gamedata.height, width=gamedata.width, bg='black')
 
-class frameticker:
+class settings:
     def __init__(self):
-        self.widget = tk.Spinbox(root, increment=1, command=self.check, text=30, from_=1, to=60)
-    def check(self):
-        num = self.widget.get()
+        self.open_button = tk.Button(root, text='⚙', font=('', 20), command=self.start)
+        self.open_button.pack(side=tk.BOTTOM, fill=tk.BOTH)
+    def start(self):
+        import threading
+        threading.Thread(target=self.make, daemon=True).start()
+    def make(self):
+        if self.running:
+            messagebox.showerror('Window already open', 'Please close the Settings window to relaunch')
+        else:
+            self.running = True
+            self.window = tk.Tk()
+            self.window.title('Settings')
+            self.labels = tk.Frame(self.window)
+            self.inputs = tk.Frame(self.window)
+            self.frame_cap_label = tk.Label(self.labels, text='FPS Cap')
+            self.frame_cap = tk.Spinbox(self.inputs, increment=1, from_=1, to=60, command=self.update_frame_cap)
+            ####
+            self.frame_cap_label.pack(fill=tk.X, side=tk.LEFT)
+            ####
+            self.frame_cap.pack(fill=tk.X, side=tk.LEFT, expand=True)
+            ####
+            self.labels.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            self.inputs.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            self.window.mainloop()
+            self.running = False
+    def update_frame_cap(self):
         try:
-            int(num)
+            self.frame_cap = int(self.frame_cap.get())
         except:
-            self.widget.config(text=30)
+            pass
+    frame_cap = 60
+    running = False
+
+settings()
 
 #####
 
@@ -238,7 +262,6 @@ new_row()
 
 balls = []
 
-ftick = frameticker()
 onclick_b = onclick(balls, canvas, tiles)
 canvas.bind('<Button-1>', onclick_b.bind)
 threading.Thread(target=refreshloop, name='Refresh', daemon=True).start()
@@ -247,6 +270,5 @@ threading.Thread(target=refreshloop, name='Refresh', daemon=True).start()
 
 slabel.widget.pack()
 canvas.pack()
-ftick.widget.pack(fill=tk.X, expand=True)
 
 root.mainloop()
