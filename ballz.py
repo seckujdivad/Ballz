@@ -116,6 +116,7 @@ class onclick:
             b.enabled = False
         running = True
         lsince = 9
+        self.ballsnextround = 0
         while running:
             lsince += 1
             still = False
@@ -170,7 +171,7 @@ class onclick:
                 running = True
             else:
                 running = False
-            time.sleep(0.005)
+            time.sleep(settings.physics_delay_value)
         for row in tiles:
             for t in row:
                 if t.y > 340:
@@ -198,7 +199,7 @@ def refreshloop():
         start = time.time()
         for b in balls:
             b.refresh()
-        delay = (1 / settings.frame_cap) - (time.time() - start)
+        delay = (1 / int(settings.frame_cap_value)) - (time.time() - start)
         if delay > 0:
             time.sleep(delay)
 
@@ -216,44 +217,44 @@ class gamedata:
     width = 299
 
 slabel = scorelabel()
-canvas = tk.Canvas(root, height=gamedata.height, width=gamedata.width, bg='black')
+canvas = tk.Canvas(root, height=gamedata.height, width=gamedata.width, bg='black', highlightthickness=0)
 
 class settings:
     def __init__(self):
-        self.open_button = tk.Button(root, text='⚙', font=('', 20), command=self.start)
-        self.open_button.pack(side=tk.BOTTOM, fill=tk.BOTH)
-    def start(self):
-        import threading
-        threading.Thread(target=self.make, daemon=True).start()
+        self.open_button = tk.Button(root, text='⚙', font=('', 15), command=self.make, relief=tk.FLAT, bg='black', fg='white', overrelief=tk.RIDGE, activeforeground='white', activebackground='black')
+        self.open_button.pack(fill=tk.BOTH, side=tk.TOP)
     def make(self):
         if self.running:
-            messagebox.showerror('Window already open', 'Please close the Settings window to relaunch')
+            self.window.destroy()
+            self.running = False
         else:
             self.running = True
-            self.window = tk.Tk()
-            self.window.title('Settings')
+            self.window = tk.Frame(root)
             self.labels = tk.Frame(self.window)
             self.inputs = tk.Frame(self.window)
             self.frame_cap_label = tk.Label(self.labels, text='FPS Cap')
-            self.frame_cap = tk.Spinbox(self.inputs, increment=1, from_=1, to=60, command=self.update_frame_cap)
+            self.frame_cap = tk.Spinbox(self.inputs, increment=2, from_=1, to=60, command=self.update_frame_cap, highlightthickness=0)
+            self.physics_delay_label = tk.Label(self.labels, text='Physics tick delay (ms)')
             ####
-            self.frame_cap_label.pack(fill=tk.X, side=tk.LEFT)
+            self.frame_cap_label.pack(fill=tk.X, anchor='nw')
+            self.physics_delay_label.pack(fill=tk.X, anchor='nw')
             ####
-            self.frame_cap.pack(fill=tk.X, side=tk.LEFT, expand=True)
+            self.frame_cap.pack(fill=tk.X, anchor='nw', expand=True)
             ####
             self.labels.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-            self.inputs.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-            self.window.mainloop()
-            self.running = False
+            self.inputs.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+            self.window.pack(side=tk.BOTTOM, fill=tk.BOTH)
     def update_frame_cap(self):
         try:
-            self.frame_cap = int(self.frame_cap.get())
+            self.frame_cap_value = int(self.frame_cap.get())
         except:
             pass
-    frame_cap = 60
+    threadhash = 0
+    frame_cap_value = 60
+    physics_delay_value = 0.005
     running = False
 
-settings()
+
 
 #####
 
@@ -270,5 +271,6 @@ threading.Thread(target=refreshloop, name='Refresh', daemon=True).start()
 
 slabel.widget.pack()
 canvas.pack()
+settings()
 
 root.mainloop()
