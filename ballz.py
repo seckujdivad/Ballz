@@ -219,10 +219,9 @@ class gamedata:
 slabel = scorelabel()
 canvas = tk.Canvas(root, height=gamedata.height, width=gamedata.width, bg='black', highlightthickness=0)
 
-class settings:
+class settings_class:
     def __init__(self):
         self.open_button = tk.Button(root, text='⚙', font=('', 15), command=self.make, relief=tk.FLAT, bg='black', fg='white', overrelief=tk.RIDGE, activeforeground='white', activebackground='black')
-        self.open_button.pack(fill=tk.BOTH, side=tk.TOP)
     def make(self):
         if self.running:
             self.window.destroy()
@@ -234,26 +233,38 @@ class settings:
             self.inputs = tk.Frame(self.window)
             self.frame_cap_label = tk.Label(self.labels, text='FPS Cap')
             self.frame_cap = tk.Spinbox(self.inputs, increment=2, from_=1, to=60, command=self.update_frame_cap, highlightthickness=0)
-            self.physics_delay_label = tk.Label(self.labels, text='Physics tick delay (ms)')
+            self.physics_delay_label = tk.Label(self.labels, text='Physics Tick Delay (ms)')
+            self.physics_delay = tk.Spinbox(self.inputs, increment=0.5, from_=0, to=10, command=self.update_physics_delay)
             ####
             self.frame_cap_label.pack(fill=tk.X, anchor='nw')
             self.physics_delay_label.pack(fill=tk.X, anchor='nw')
             ####
             self.frame_cap.pack(fill=tk.X, anchor='nw', expand=True)
+            self.physics_delay.pack(fill=tk.X, anchor='nw', expand=True)
+            ####
+            self.frame_cap.delete(0, tk.END)
+            self.physics_delay.delete(0, tk.END)
+            self.frame_cap.insert(0, self.frame_cap_value)
+            self.physics_delay.insert(0, self.physics_delay_value * 1000)
             ####
             self.labels.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
             self.inputs.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
             self.window.pack(side=tk.BOTTOM, fill=tk.BOTH)
     def update_frame_cap(self):
         try:
-            self.frame_cap_value = int(self.frame_cap.get())
+            self.frame_cap_value = float(self.frame_cap.get())
+        except:
+            pass
+    def update_physics_delay(self):
+        try:
+            self.physics_delay_value = float(self.physics_delay.get()) / 1000
         except:
             pass
     threadhash = 0
-    frame_cap_value = 60
-    physics_delay_value = 0.005
+    frame_cap_value = 50
+    physics_delay_value = 0.004
     running = False
-
+settings = settings_class()
 
 
 #####
@@ -271,6 +282,6 @@ threading.Thread(target=refreshloop, name='Refresh', daemon=True).start()
 
 slabel.widget.pack()
 canvas.pack()
-settings()
+settings.open_button.pack(fill=tk.BOTH, side=tk.TOP)
 
 root.mainloop()
