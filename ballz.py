@@ -184,7 +184,7 @@ class onclick:
         self.score += 1
         slabel.increment(1)
         self.running = False
-    maxmove = 3
+    maxmove = 4
     running = False
     stop = False
     ballsnextround = 0
@@ -204,14 +204,6 @@ def refreshloop():
         delay = (1 / tick) - (time.time() - start)
         if delay > 0:
             time.sleep(delay)
-            try:
-                canvas.delete(obj)
-                obj = ''
-            except:
-                pass
-        else:
-            if obj == '':
-                obj = canvas.create_text(gamedata.width / 2, gamedata.height - 20, text='CANNOT RENDER FRAME', font=('', 15), fill='red')
 
 class scorelabel:
     def __init__(self):
