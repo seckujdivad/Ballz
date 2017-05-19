@@ -1,4 +1,4 @@
-# ---- ---- ---- ---- **Ballz** ---- ---- ---- ----
+# **Ballz**
 
 A loose clone of the [Ketchapp](http://www.ketchappstudio.com/) game.
 - [iOS](https://itunes.apple.com/app/ballz/id1139609950)
